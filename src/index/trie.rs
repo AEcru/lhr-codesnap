@@ -83,12 +83,15 @@ impl SymbolTrie {
     }
 
     /// Prefix search: find all name_ids whose name starts with `prefix`.
+    /// Reserved for fuzzy matching optimization (tree walk vs linear scan).
+    #[allow(dead_code)]
     pub fn prefix_search(&self, prefix: &str) -> Vec<u32> {
         let mut results = Vec::new();
         Self::collect_prefix(&self.root, prefix, prefix, &mut results);
         results
     }
 
+    #[allow(dead_code)]
     fn collect_prefix(node: &TrieNode, original_prefix: &str, remaining: &str, results: &mut Vec<u32>) {
         if remaining.is_empty() {
             // Prefix exhausted, collect all descendants
@@ -130,6 +133,7 @@ impl SymbolTrie {
         }
     }
 
+    #[allow(dead_code)]
     fn collect_all(node: &TrieNode, results: &mut Vec<u32>) {
         if let Some(id) = node.name_id {
             results.push(id);

@@ -43,15 +43,45 @@ impl<'a> Finder<'a> {
     }
 
     /// Find all symbols matching the given name.
+    /// Uses trie exact lookup first (O(1)), falls back to inverted index.
     pub fn find(&self, name: &str) -> Result<Vec<FindResult>> {
-        let symbol_ids = self.index.inverted.find_by_name(name);
-        let mut results = Vec::new();
+        // Use trie for O(1) exact lookup optimization
+        let name_id = if let Some(id) = self.index.trie.exact_lookup(name) {
+            Some(id)
+        } else {
+            // Prefix search via inverted index for partial matches
+            let prefix_hits = self.index.inverted.prefix_search(name);
+            if !prefix_hits.is_empty() {
+                prefix_hits.first().copied()
+            } else {
+                None
+            }
+        };
 
+        // Collect symbol IDs from inverted index
+        let symbol_ids = if let Some(_nid) = name_id {
+            // Use kind-filtered lookup if kind filter is set
+            if let Some(ref kf) = self.kind_filter {
+                let kind_ids = self.index.inverted.find_by_kind(kf.as_str());
+                let name_ids = self.index.inverted.find_by_name(name);
+                // Intersection: names matching both name AND kind
+                name_ids.into_iter().filter(|id| kind_ids.contains(id)).collect()
+            } else {
+                self.index.inverted.find_by_name(name)
+            }
+        } else {
+            self.index.inverted.find_by_name(name)
+        };
+
+        let mut results = Vec::new();
         for &sym_id in &symbol_ids {
             if sym_id as usize >= self.index.symbols.len() {
                 continue;
             }
             let sym = &self.index.symbols[sym_id as usize];
+
+            // Use get_name for efficient string lookup
+            let sym_name = self.index.inverted.get_name(sym.name_id).unwrap_or(name);
 
             if let Some(ref kf) = self.kind_filter {
                 if sym.kind != *kf {
@@ -64,9 +94,20 @@ impl<'a> Finder<'a> {
                     continue;
                 }
             }
+            // Apply file filter via inverted index file lookup
+            if let Some(ref ff) = self.file_filter {
+                let file_matches = self.index.inverted.find_by_file(sym.file_id);
+                if file_matches.is_empty() {
+                    continue;
+                }
+                let file_path = self.get_string(sym.file_id);
+                if !file_path.contains(ff) {
+                    continue;
+                }
+            }
 
             results.push(FindResult {
-                name: name.to_string(),
+                name: sym_name.to_string(),
                 kind: sym.kind.as_str().to_string(),
                 visibility: sym.visibility.as_str().to_string(),
                 file: self.get_string(sym.file_id).to_string(),
@@ -180,7 +221,6 @@ impl<'a> Finder<'a> {
     pub fn build_context(
         &self, task: &str, max_nodes: usize, _include_code: bool,
     ) -> Result<TaskContext> {
-        // Tokenize the task description into keywords
         let keywords: Vec<&str> = task
             .split(|c: char| !c.is_alphanumeric())
             .filter(|w| w.len() >= 3)
@@ -208,7 +248,6 @@ impl<'a> Finder<'a> {
             }
         }
 
-        // Collect call edges among found symbols
         let mut call_edges = Vec::new();
         for ep in &entry_points {
             if let Some(name_id) = self.index.inverted.get_name_id(&ep.name) {

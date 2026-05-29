@@ -82,6 +82,22 @@ impl Builder {
             eprintln!("Writing index to disk...");
         }
 
+        index.call_graph.finalize();
+
+        // Build Roaring bitmap caches: map callers to file IDs for impact analysis
+        for (sym_idx, _sym) in index.symbols.iter().enumerate() {
+            let sym_id = sym_idx as u32;
+            let callers = index.call_graph.callers(sym_id);
+            for &caller_id in callers {
+                if (caller_id as usize) < index.symbols.len() {
+                    let file_id = index.symbols[caller_id as usize].file_id;
+                    index.roaring.add_caller_file(sym_id, file_id);
+                }
+            }
+            // Pre-build transitive cache up to depth 3
+            index.roaring.build_transitive(sym_id, 3, &index.call_graph);
+        }
+
         let data = serialize(&index)?;
         fs::write(&index_path, &data)?;
 

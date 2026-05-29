@@ -1,4 +1,4 @@
-mod bitmap;
+pub mod bitmap;
 mod builder;
 mod csr;
 mod inverted;
@@ -46,7 +46,8 @@ pub struct Symbol {
     pub kind: SymbolKind,
     /// Visibility: public, private, protected, internal
     pub visibility: Visibility,
-    /// String table ID for the parent scope (class/module name)
+    /// String table ID for the parent scope (reserved for scope-aware queries)
+    #[allow(dead_code)]
     pub parent_id: Option<u32>,
 }
 

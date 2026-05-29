@@ -71,7 +71,8 @@ impl RoaringIndex {
         result
     }
 
-    /// Union of two file ID sets.
+    /// Union of two file ID sets. Reserved for multi-symbol impact analysis.
+    #[allow(dead_code)]
     pub fn union(a: &[u32], b: &[u32]) -> Vec<u32> {
         let mut result = a.to_vec();
         for &id in b {
