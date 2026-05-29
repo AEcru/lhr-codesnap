@@ -2,14 +2,14 @@
 set -euo pipefail
 
 # CodeSnap installer for macOS and Linux
+# Primary: cargo install from GitHub source
+# Fallback: pre-built binary download (when GitHub Releases are available)
 # Usage: curl -fsSL https://raw.githubusercontent.com/AEcru/lhr-codesnap/main/install.sh | sh
 
 REPO="AEcru/lhr-codesnap"
 BIN_NAME="codesnap"
 INSTALL_DIR="${HOME}/.local/bin"
-VERSION="${CODESNAP_VERSION:-latest}"
 
-# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -19,80 +19,36 @@ info()  { printf "${GREEN}[CodeSnap]${NC} %s\n" "$*"; }
 warn()  { printf "${YELLOW}[CodeSnap]${NC} %s\n" "$*"; }
 error() { printf "${RED}[CodeSnap]${NC} %s\n" "$*"; exit 1; }
 
-# Detect OS and architecture
-detect_platform() {
-    OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-    ARCH=$(uname -m)
-
-    case "$ARCH" in
-        x86_64|amd64)  ARCH="x86_64" ;;
-        aarch64|arm64) ARCH="aarch64" ;;
-        *) error "Unsupported architecture: $ARCH" ;;
-    esac
-
-    case "$OS" in
-        linux)  PLATFORM="unknown-linux-musl" ;;
-        darwin) PLATFORM="apple-darwin" ;;
-        *) error "Unsupported OS: $OS" ;;
-    esac
-
-    TARGET="${ARCH}-${PLATFORM}"
-    info "Detected platform: $TARGET"
-}
-
-# Check for required tools
-check_deps() {
-    if ! command -v curl &> /dev/null && ! command -v wget &> /dev/null; then
-        error "curl or wget is required to download CodeSnap"
+# Check prerequisites
+check_rust() {
+    if command -v cargo &> /dev/null; then
+        return 0
     fi
+    return 1
 }
 
-# Install from source via cargo
-install_from_source() {
-    info "Building from source with Cargo..."
-    if ! command -v cargo &> /dev/null; then
-        warn "Cargo not found. Install Rust first: https://rustup.rs"
-        warn "Then run: cargo install codesnap"
-        exit 1
-    fi
-    cargo install codesnap
-    info "Installed codesnap via cargo"
+# Primary: install via cargo from GitHub source
+install_via_cargo() {
+    info "Installing via cargo from GitHub source..."
+    cargo install --git "https://github.com/${REPO}.git" codesnap
 }
 
-# Download pre-built binary
-install_binary() {
-    local url="https://github.com/${REPO}/releases/download/v${VERSION}/${BIN_NAME}-${TARGET}.tar.gz"
+# Fallback: clone and build manually
+install_via_clone() {
+    info "Cloning and building from source..."
     local tmpdir
     tmpdir=$(mktemp -d)
-    local archive="${tmpdir}/codesnap.tar.gz"
-
-    info "Downloading CodeSnap ${VERSION}..."
-    if command -v curl &> /dev/null; then
-        curl -fsSL "$url" -o "$archive" || {
-            warn "Pre-built binary not available, falling back to source build"
-            rm -rf "$tmpdir"
-            install_from_source
-            return
-        }
-    else
-        wget -q "$url" -O "$archive" || {
-            warn "Pre-built binary not available, falling back to source build"
-            rm -rf "$tmpdir"
-            install_from_source
-            return
-        }
-    fi
-
+    git clone "https://github.com/${REPO}.git" "$tmpdir"
+    cd "$tmpdir"
+    cargo build --release
     mkdir -p "$INSTALL_DIR"
-    tar -xzf "$archive" -C "$tmpdir"
-    cp "${tmpdir}/${BIN_NAME}" "${INSTALL_DIR}/${BIN_NAME}"
+    cp "target/release/${BIN_NAME}" "${INSTALL_DIR}/${BIN_NAME}"
     chmod +x "${INSTALL_DIR}/${BIN_NAME}"
+    cd - > /dev/null
     rm -rf "$tmpdir"
-
-    info "Installed codesnap to ${INSTALL_DIR}/${BIN_NAME}"
+    info "Installed to ${INSTALL_DIR}/${BIN_NAME}"
 }
 
-# Add to PATH if needed
 setup_path() {
     if [[ ":$PATH:" != *":${INSTALL_DIR}:"* ]]; then
         warn "Add ${INSTALL_DIR} to your PATH:"
@@ -106,18 +62,19 @@ main() {
     info "CodeSnap installer"
     echo ""
 
-    detect_platform
-    check_deps
-
-    # If cargo is available, prefer source build (always latest)
-    if command -v cargo &> /dev/null; then
-        install_from_source
+    if check_rust; then
+        info "Rust toolchain detected. Installing from source..."
+        if install_via_cargo; then
+            info "Done! Run 'codesnap init' in any project to get started."
+            return
+        fi
+        warn "cargo install --git failed, trying manual build..."
+        install_via_clone
     else
-        install_binary
+        error "Rust is required. Install it first: https://rustup.rs"
     fi
 
     setup_path
-
     echo ""
     info "Installation complete! Run 'codesnap init' in any project to get started."
 }

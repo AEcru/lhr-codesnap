@@ -12,14 +12,49 @@ description: >
 
 # CodeSnap — Semantic Code Intelligence
 
-Use the `codesnap` CLI for instant code understanding. It uses a pre-built
-disk index with purpose-optimized data structures — faster and cheaper than
-grep loops for structural questions.
+Use the `codesnap` CLI for instant code understanding via a pre-built disk
+index with purpose-optimized data structures.
+
+## Bootstrap (run first)
+
+Before using any codesnap command, check if it is installed. If not, install
+it automatically:
+
+```bash
+# Check availability
+which codesnap 2>/dev/null || where codesnap 2>/dev/null || echo "NOT_INSTALLED"
+```
+
+If NOT installed:
+
+```bash
+# Primary: install from GitHub source (requires Rust/cargo)
+cargo install --git https://github.com/AEcru/lhr-codesnap.git codesnap
+
+# Fallback: clone & build manually if cargo-install-git is unavailable
+git clone https://github.com/AEcru/lhr-codesnap.git /tmp/lhr-codesnap
+cd /tmp/lhr-codesnap && cargo build --release
+cp target/release/codesnap ~/.cargo/bin/
+```
+
+If Rust/cargo is NOT available, fall back to ripgrep for this session and
+tell the user to install Rust: https://rustup.rs
+
+If you are INSIDE the codesnap source repo itself, use `cargo run --` as
+a shortcut (no global install needed):
+
+```bash
+cargo run --release -- <command> <args>
+```
+
+After installation, run `codesnap init` in the target project to build the
+index. This is required once per project (a few seconds to 1-2 minutes).
 
 ## Quick Reference
 
 | Command | Purpose | Example |
 |---------|---------|---------|
+| `codesnap init` | Build index (first time) | `codesnap init` |
 | `codesnap find <name>` | Locate symbol definition | `codesnap find "UserService"` |
 | `codesnap callers <name>` | Who calls this symbol | `codesnap callers "validateToken"` |
 | `codesnap callees <name>` | What this symbol calls | `codesnap callees "login"` |
@@ -76,54 +111,16 @@ entry points, related symbols, route mappings, and key call edges.
 codesnap context "user registration flow"
 ```
 
-### 5. Trust the auto-sync
+### 5. Trust the auto-sync — no manual refresh needed
 
 Every query internally compares file mtimes with the index. If a file changed,
 it's incrementally re-parsed before results return. No need to run
 `codesnap check` before every query.
 
-### 6. First-time setup is one command
+### 6. Install once, init per project
 
-If `.codesnap/` doesn't exist in the project:
-
-```
-codesnap init
-```
-
-A few seconds for small projects, 1-2 minutes for large ones. After init, all
-queries are instant.
-
-## Dependency Check & Installation
-
-Before using any `codesnap` command, verify the CLI is available:
-
-```bash
-which codesnap || where codesnap   # Check if installed
-```
-
-If `codesnap` is NOT found, install it using one of these methods:
-
-**Option 1: Build from source (recommended — always latest)**
-```bash
-git clone https://github.com/AEcru/lhr-codesnap.git /tmp/lhr-codesnap
-cd /tmp/lhr-codesnap && cargo build --release
-cp target/release/codesnap ~/.cargo/bin/   # or ~/.local/bin/
-```
-
-**Option 2: Cargo install**
-```bash
-cargo install codesnap
-```
-
-**Option 3: One-line installer**
-```bash
-curl -fsSL https://raw.githubusercontent.com/AEcru/lhr-codesnap/main/install.sh | sh
-```
-
-After installation, verify with:
-```bash
-codesnap --version
-```
+`codesnap` is installed once globally. Then run `codesnap init` once per
+project. After that, all queries are instant.
 
 ## Limitations
 
