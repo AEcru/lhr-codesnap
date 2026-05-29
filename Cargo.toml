@@ -21,9 +21,10 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 walkdir = "2"
 memmap2 = "0.9"
-croaring = "4"
+croaring = "2"
 ahash = "0.8"
 parking_lot = "0.12"
+regex-lite = "0.1"
 
 [profile.release]
 opt-level = "z"
