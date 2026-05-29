@@ -171,18 +171,136 @@ pub struct StatusReport {
 }
 
 fn deserialize(data: &[u8]) -> Result<Index> {
-    if data.len() < 12 || &data[..7] != b"CSNAP01" {
+    if data.len() < 23 || &data[..7] != b"CSNAP01" {
         anyhow::bail!("Invalid or corrupted index file");
     }
-    // Placeholder: full deserialization would parse each section
+
+    let mut pos: usize = 7;
+
+    let version = read_u32(data, &mut pos)?;
+    if version != 1 {
+        anyhow::bail!("Unsupported index version: {}", version);
+    }
+
+    let symbol_count = read_u32(data, &mut pos)? as usize;
+    let string_count = read_u32(data, &mut pos)? as usize;
+    let mtime_count = read_u32(data, &mut pos)? as usize;
+
+    // Read string table
+    let mut strings: Vec<String> = Vec::with_capacity(string_count);
+    for _ in 0..string_count {
+        let len = read_u32(data, &mut pos)? as usize;
+        if pos + len > data.len() {
+            anyhow::bail!("Index file truncated at string table");
+        }
+        let s = String::from_utf8(data[pos..pos + len].to_vec())
+            .with_context(|| "Invalid UTF-8 in string table")?;
+        pos += len;
+        strings.push(s);
+    }
+
+    // Rebuild string→id map for inverted index intern
+    let _string_map: std::collections::HashMap<String, u32> = strings
+        .iter()
+        .enumerate()
+        .map(|(i, s)| (s.clone(), i as u32))
+        .collect();
+
+    // Read symbols
+    let mut symbols: Vec<Symbol> = Vec::with_capacity(symbol_count);
+    let mut inverted = InvertedIndex::new();
+    let mut trie = SymbolTrie::new();
+
+    for sym_idx in 0..symbol_count {
+        let name_id = read_u32(data, &mut pos)?;
+        let file_id = read_u32(data, &mut pos)?;
+        let line = read_u32(data, &mut pos)?;
+        let kind_len = read_u8(data, &mut pos)? as usize;
+        let kind_str = read_str(data, &mut pos, kind_len)?;
+        let vis_len = read_u8(data, &mut pos)? as usize;
+        let vis_str = read_str(data, &mut pos, vis_len)?;
+
+        let kind = SymbolKind::from_str(kind_str);
+        let visibility = match vis_str {
+            "public" => Visibility::Public,
+            "private" => Visibility::Private,
+            "protected" => Visibility::Protected,
+            "internal" => Visibility::Internal,
+            _ => Visibility::Unknown,
+        };
+
+        let sym = Symbol { name_id, file_id, line, kind, visibility, parent_id: None };
+        symbols.push(sym);
+
+        // Populate inverted index and trie
+        let sym_id = sym_idx as u32;
+        inverted.add_name(name_id, sym_id);
+        inverted.add_kind(kind_str, name_id);
+        inverted.add_file(file_id, sym_id);
+
+        if let Some(name) = strings.get(name_id as usize) {
+            trie.insert(name, name_id);
+            inverted.intern_name(name);
+        }
+    }
+
+    // Read file mtimes
+    let mut file_mtimes: Vec<(String, u64)> = Vec::with_capacity(mtime_count);
+    for _ in 0..mtime_count {
+        let len = read_u32(data, &mut pos)? as usize;
+        let path = read_str(data, &mut pos, len)?.to_string();
+        let mtime = read_u64(data, &mut pos)?;
+        file_mtimes.push((path, mtime));
+    }
+
     Ok(Index {
         root: String::new(),
-        strings: Vec::new(),
-        symbols: Vec::new(),
-        inverted: InvertedIndex::new(),
-        trie: SymbolTrie::new(),
+        strings,
+        symbols,
+        inverted,
+        trie,
         call_graph: CallGraph::new(),
         roaring: RoaringIndex::new(),
-        file_mtimes: Vec::new(),
+        file_mtimes,
     })
+}
+
+fn read_u32(data: &[u8], pos: &mut usize) -> Result<u32> {
+    if *pos + 4 > data.len() {
+        anyhow::bail!("Index file truncated at position {}", *pos);
+    }
+    let val = u32::from_le_bytes([data[*pos], data[*pos + 1], data[*pos + 2], data[*pos + 3]]);
+    *pos += 4;
+    Ok(val)
+}
+
+fn read_u64(data: &[u8], pos: &mut usize) -> Result<u64> {
+    if *pos + 8 > data.len() {
+        anyhow::bail!("Index file truncated at position {}", *pos);
+    }
+    let val = u64::from_le_bytes([
+        data[*pos], data[*pos + 1], data[*pos + 2], data[*pos + 3],
+        data[*pos + 4], data[*pos + 5], data[*pos + 6], data[*pos + 7],
+    ]);
+    *pos += 8;
+    Ok(val)
+}
+
+fn read_u8(data: &[u8], pos: &mut usize) -> Result<u8> {
+    if *pos >= data.len() {
+        anyhow::bail!("Index file truncated at position {}", *pos);
+    }
+    let val = data[*pos];
+    *pos += 1;
+    Ok(val)
+}
+
+fn read_str<'a>(data: &'a [u8], pos: &mut usize, len: usize) -> Result<&'a str> {
+    if *pos + len > data.len() {
+        anyhow::bail!("Index file truncated at string at position {}", *pos);
+    }
+    let s = std::str::from_utf8(&data[*pos..*pos + len])
+        .with_context(|| "Invalid UTF-8 in index")?;
+    *pos += len;
+    Ok(s)
 }

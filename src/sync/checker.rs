@@ -1,7 +1,6 @@
 use crate::index;
 use anyhow::Result;
 use std::collections::HashSet;
-use std::fs;
 use std::path::Path;
 use std::time::UNIX_EPOCH;
 
@@ -22,7 +21,7 @@ pub struct CheckReport {
 #[derive(Debug)]
 pub struct StaleFile {
     pub path: String,
-    /// Seconds since last index
+    /// Age in milliseconds since the file was modified after indexing
     pub age_seconds: u64,
 }
 
@@ -47,23 +46,24 @@ impl Checker {
             });
         }
 
-        let _data = fs::read(&index_path)?;
         let idx = index::open(&self.path)?;
 
         let mut stale_files = Vec::new();
         let mut indexed_paths = HashSet::new();
 
-        // Check each indexed file against disk mtime
-        for (file_path, indexed_mtime) in &idx.file_mtimes {
+        // Check each indexed file against disk mtime (millisecond precision)
+        for (file_path, indexed_mtime_secs) in &idx.file_mtimes {
             indexed_paths.insert(file_path.clone());
             let full_path = root.join(file_path);
-            if let Ok(metadata) = fs::metadata(&full_path) {
+            if let Ok(metadata) = std::fs::metadata(&full_path) {
                 if let Ok(modified) = metadata.modified() {
                     if let Ok(duration) = modified.duration_since(UNIX_EPOCH) {
-                        let disk_mtime = duration.as_secs();
-                        if disk_mtime > *indexed_mtime {
-                            let age = disk_mtime - *indexed_mtime;
-                            stale_files.push(StaleFile { path: file_path.clone(), age_seconds: age });
+                        // Use millisecond precision to avoid false negatives
+                        let disk_mtime_ms = duration.as_millis() as u64;
+                        let indexed_mtime_ms = *indexed_mtime_secs * 1000;
+                        if disk_mtime_ms > indexed_mtime_ms {
+                            let age_secs = (disk_mtime_ms - indexed_mtime_ms) / 1000;
+                            stale_files.push(StaleFile { path: file_path.clone(), age_seconds: age_secs });
                         }
                     }
                 }
@@ -75,7 +75,7 @@ impl Checker {
         let mut fixed = false;
 
         if !fresh && self.fix {
-            // Re-index stale files by rebuilding the index
+            // Re-index stale files by rebuilding the full index
             index::Builder::new(&self.path).force(true).quiet(true).build()?;
             fixed = true;
         }

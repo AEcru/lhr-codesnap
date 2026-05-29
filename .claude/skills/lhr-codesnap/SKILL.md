@@ -93,6 +93,38 @@ codesnap init
 A few seconds for small projects, 1-2 minutes for large ones. After init, all
 queries are instant.
 
+## Dependency Check & Installation
+
+Before using any `codesnap` command, verify the CLI is available:
+
+```bash
+which codesnap || where codesnap   # Check if installed
+```
+
+If `codesnap` is NOT found, install it using one of these methods:
+
+**Option 1: Build from source (recommended — always latest)**
+```bash
+git clone https://github.com/AEcru/lhr-codesnap.git /tmp/lhr-codesnap
+cd /tmp/lhr-codesnap && cargo build --release
+cp target/release/codesnap ~/.cargo/bin/   # or ~/.local/bin/
+```
+
+**Option 2: Cargo install**
+```bash
+cargo install codesnap
+```
+
+**Option 3: One-line installer**
+```bash
+curl -fsSL https://raw.githubusercontent.com/AEcru/lhr-codesnap/main/install.sh | sh
+```
+
+After installation, verify with:
+```bash
+codesnap --version
+```
+
 ## Limitations
 
 - **Cold start**: Without an index, queries fall back to ripgrep (slower but
