@@ -120,6 +120,12 @@ impl Builder {
         for entry in WalkDir::new(root)
             .into_iter()
             .filter_entry(|e| {
+                // Never skip the root directory (depth 0), otherwise walkdir
+                // won't descend into any subdirectories. The root path may be
+                // "." which starts with '.' and would be incorrectly excluded.
+                if e.depth() == 0 {
+                    return true;
+                }
                 let name = e.file_name().to_string_lossy();
                 !self.is_excluded_dir(&name)
             })
@@ -221,6 +227,9 @@ impl Builder {
         let impl_re = regex_lite::Regex::new(
             r"(?m)^\s*impl\s+(?:<\w+>\s+)?(\w+)"
         ).unwrap();
+        let enum_re = regex_lite::Regex::new(
+            r"(?m)^\s*(pub(?:\s*\(\s*crate\s*\))?\s+)?enum\s+(\w+)"
+        ).unwrap();
 
         for (line_num, line) in content.lines().enumerate() {
             if let Some(caps) = fn_re.captures(line) {
@@ -266,6 +275,24 @@ impl Builder {
                 let sym = Symbol {
                     name_id, file_id, line: (line_num + 1) as u32,
                     kind: SymbolKind::Interface, visibility: Visibility::Public,
+                    parent_id: None,
+                };
+                index.symbols.push(sym);
+                index.trie.insert(name, name_id);
+                index.inverted.add_name(name_id, index.symbols.len() as u32 - 1);
+            }
+            if let Some(caps) = enum_re.captures(line) {
+                let visibility = if caps.get(1).is_some() && line.contains("pub") {
+                    Visibility::Public
+                } else {
+                    Visibility::Private
+                };
+                let name = caps.get(2).unwrap().as_str();
+                if Self::is_common_keyword(name) { continue; }
+                let name_id = Self::intern_string(name, &mut index.strings, string_map);
+                let sym = Symbol {
+                    name_id, file_id, line: (line_num + 1) as u32,
+                    kind: SymbolKind::Enum, visibility,
                     parent_id: None,
                 };
                 index.symbols.push(sym);

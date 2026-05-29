@@ -241,7 +241,9 @@ fn deserialize(data: &[u8]) -> Result<Index> {
 
         if let Some(name) = strings.get(name_id as usize) {
             trie.insert(name, name_id);
-            inverted.intern_name(name);
+            // Use register_name to preserve the original name_id from the
+            // serialized index, ensuring name_to_id and name_to_symbols agree.
+            inverted.register_name(name, name_id);
         }
     }
 

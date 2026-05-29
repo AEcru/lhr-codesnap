@@ -31,8 +31,10 @@ mod tests {
         assert!(std::path::Path::new(&index_path).exists(), "index file not created");
 
         // Run codesnap status
+        let manifest_dir = std::env::current_dir().unwrap();
+        let manifest_arg = format!("--manifest-path={}/Cargo.toml", manifest_dir.display());
         let status = Command::new("cargo")
-            .args(["run", "--", "status", &path])
+            .args(["run", &manifest_arg, "--", "status", &path])
             .output()
             .unwrap();
         let stdout = String::from_utf8_lossy(&status.stdout);
@@ -40,7 +42,7 @@ mod tests {
 
         // Run codesnap find
         let find = Command::new("cargo")
-            .args(["run", "--", "find", "hello", "--json"])
+            .args(["run", &manifest_arg, "--", "find", "hello", "--json"])
             .current_dir(&path)
             .output()
             .unwrap();

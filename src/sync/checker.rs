@@ -58,11 +58,11 @@ impl Checker {
             if let Ok(metadata) = std::fs::metadata(&full_path) {
                 if let Ok(modified) = metadata.modified() {
                     if let Ok(duration) = modified.duration_since(UNIX_EPOCH) {
-                        // Use millisecond precision to avoid false negatives
-                        let disk_mtime_ms = duration.as_millis() as u64;
-                        let indexed_mtime_ms = *indexed_mtime_secs * 1000;
-                        if disk_mtime_ms > indexed_mtime_ms {
-                            let age_secs = (disk_mtime_ms - indexed_mtime_ms) / 1000;
+                        // Use second precision on both sides to avoid false positives
+                        // from sub-second mtime differences introduced during indexing.
+                        let disk_mtime_secs = duration.as_secs();
+                        if disk_mtime_secs > *indexed_mtime_secs {
+                            let age_secs = disk_mtime_secs - *indexed_mtime_secs;
                             stale_files.push(StaleFile { path: file_path.clone(), age_seconds: age_secs });
                         }
                     }

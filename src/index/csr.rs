@@ -102,6 +102,10 @@ impl CallGraph {
         if from == to {
             return vec![from];
         }
+        // Guard: no nodes in graph, or IDs out of range
+        if self.node_count == 0 || from >= self.node_count || to >= self.node_count {
+            return Vec::new();
+        }
         let mut visited = vec![false; self.node_count as usize];
         let mut queue = std::collections::VecDeque::new();
         let mut parent: Vec<Option<u32>> = vec![None; self.node_count as usize];
@@ -129,6 +133,10 @@ impl CallGraph {
 
     /// Transitive callers up to `max_depth` levels.
     pub fn transitive_callers(&self, node: u32, max_depth: usize) -> Vec<u32> {
+        // Guard: no nodes in graph, or node ID out of range
+        if self.node_count == 0 || node >= self.node_count {
+            return Vec::new();
+        }
         let mut results = Vec::new();
         let mut visited = vec![false; self.node_count as usize];
         let mut queue = std::collections::VecDeque::new();
