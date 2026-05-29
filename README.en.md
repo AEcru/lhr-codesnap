@@ -107,7 +107,7 @@ needs to understand code. Or ask directly:
 | `codesnap callers <name>` | Find callers of a symbol | `codesnap callers "validateToken"` |
 | `codesnap callees <name>` | Find what a symbol calls | `codesnap callees "login"` |
 | `codesnap impact <name>` | Full change impact radius | `codesnap impact "TokenUtil"` |
-| `codesnap trace <a> <b>` | Find call path from A to B | `codesnap trace "Order.create" "DB.save"` |
+| `codesnap trace <a> <b>` | Find call path from A to B | `codesnap trace "OrderController" "OrderRepository"` |
 | `codesnap context <task>` | Build relevant code context | `codesnap context "fix login bug"` |
 | `codesnap status` | Index health + statistics | `codesnap status` |
 | `codesnap check` | Verify index freshness | `codesnap check` |

@@ -128,23 +128,19 @@ Show index health, coverage, and statistics.
 Output format:
 ```
 ## Index Status
-- State: Ready (2,847 symbols indexed)
-- Last indexed: 2026-05-29 14:32:05
-- Files indexed: 312 / 315 (3 pending)
+- State: Ready
+- Symbols indexed: 2,847
+- Files indexed: 312
 - Disk size: 1.2 MB
-
-## Coverage by Language
-- Java: 187 files, 1,523 symbols
-- TypeScript: 89 files, 892 symbols
-- Python: 36 files, 432 symbols
+- Last indexed: unknown
 
 ## Pending Files
-- src/auth/NewService.java (modified 30s ago)
+- src/auth/NewService.java
 ```
 
 ## `codesnap check`
 
-Verify index freshness. Returns exit code 0 if index is up to date, 1 if stale.
+Verify index freshness. Returns exit code 0 if index is up to date, 3 if stale.
 
 Options:
 - `--fix` — Automatically re-index stale files instead of just reporting
@@ -157,15 +153,11 @@ Build the full index. Must be run once per project.
 Options:
 - `--force` — Rebuild index even if one already exists
 - `--quiet` — Suppress progress output
-- `--include <glob>` — Additional file patterns to include
-- `--exclude <glob>` — Additional file patterns to exclude
 
 ## Exit Codes
 
 | Code | Meaning |
 |------|---------|
-| 0 | Success |
-| 1 | Index not found (run `codesnap init`) |
-| 2 | Symbol not found in index |
-| 3 | Index is stale (run `codesnap check --fix`) |
-| 4 | Invalid arguments |
+| 0 | Success or no results found |
+| 1 | Error (index not found, invalid args, etc.) |
+| 3 | Index is stale — used by `check` for CI integration |

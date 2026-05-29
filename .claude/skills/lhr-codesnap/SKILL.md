@@ -89,7 +89,7 @@ blast radius. The tool traces transitive callers and groups affected files by
 module, marking test files.
 
 ```
-codesnap impact "TokenUtil.generateToken"
+codesnap impact "TokenUtil"
 ```
 
 ### 3. Use `codesnap trace` for "how does X reach Y"
@@ -99,7 +99,7 @@ The engine walks the call graph at multiple granularity levels (module → file 
 function) for efficient path finding.
 
 ```
-codesnap trace "OrderController.create" "OrderRepository.save"
+codesnap trace "OrderController" "OrderRepository"
 ```
 
 ### 4. Use `codesnap context` to get oriented in unfamiliar code

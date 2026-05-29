@@ -99,7 +99,7 @@ codesnap init
 | `codesnap callers <name>` | 查找调用者 | `codesnap callers "validateToken"` |
 | `codesnap callees <name>` | 查找被调用者 | `codesnap callees "login"` |
 | `codesnap impact <name>` | 变更影响分析 | `codesnap impact "TokenUtil"` |
-| `codesnap trace <a> <b>` | 追踪调用路径 | `codesnap trace "Order.create" "DB.save"` |
+| `codesnap trace <a> <b>` | 追踪调用路径 | `codesnap trace "OrderController" "OrderRepository"` |
 | `codesnap context <task>` | 为任务构建上下文 | `codesnap context "fix login bug"` |
 | `codesnap status` | 索引进度与统计 | `codesnap status` |
 | `codesnap check` | 自检索引新鲜度 | `codesnap check` |
