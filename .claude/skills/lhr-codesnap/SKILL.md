@@ -107,4 +107,4 @@ queries are instant.
 ## Architecture
 
 See [references/architecture.md](references/architecture.md) for data structure
-design, performance characteristics, and comparison with CodeGraph.
+design, performance characteristics, and comparison with traditional MCP solutions.

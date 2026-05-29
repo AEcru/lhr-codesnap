@@ -28,23 +28,25 @@ How it works:
 - **Self-healing** — every query compares file mtime with index, auto re-parses changes
 - **ripgrep fallback** — when index isn't ready yet, degrades gracefully
 
-## Comparison with CodeGraph
+## Key Advantages
 
-| Dimension | CodeGraph | CodeSnap |
-|-----------|-----------|----------|
+### vs Traditional MCP Server Approach
+
+| Dimension | Traditional MCP | CodeSnap |
+|-----------|----------------|----------|
 | Architecture | MCP Server (persistent daemon) | Skill + CLI (on-demand) |
-| First use | `codegraph init -i` wait for index | Instant, background indexing |
+| First use | Wait for pre-built index | Instant, progressive indexing |
 | Memory (idle) | 100-300MB (always on) | **0MB** |
 | Memory (active) | 100-300MB | 30-80MB |
-| Binary size | ~80MB (bundled Node.js) | **~5MB** (Rust musl static) |
-| Search engine | SQLite FTS5 (generic text) | **3D Inverted Index + Trie** (code-aware) |
-| Call graph | SQLite adjacency list + JOIN | **CSR compressed graph** (L3 cache resident) |
-| Impact analysis | SQL recursive CTE | **Roaring Bitmap** bitwise ops |
-| Storage engine | SQLite B-Tree | **LSM Tree** (write-optimized, incremental-friendly) |
-| Index freshness | File watcher + 2s debounce | **mtime self-check**, always current |
-| Cross-session persistence | In-memory, re-warm on restart | **Disk mmap**, instant on reconnect |
-| Setup | Edit MCP JSON config | **Zero config** |
-| Best for | Heavy use, multi-tool | **Light weight, on-demand** |
+| Binary size | ~80MB (bundled runtime) | **~5MB** (Rust musl static) |
+| Search engine | Generic full-text engine | **3D Inverted Index + Trie** (code-aware) |
+| Call graph | Generic relational DB + JOIN | **CSR compressed graph** (L3 cache resident) |
+| Impact analysis | Recursive SQL queries | **Roaring Bitmap** bitwise ops |
+| Storage engine | Generic B-Tree database | **LSM Tree** (write-optimized) |
+| Index freshness | File watcher + debounce | **mtime self-check**, always current |
+| Cross-session | In-memory, re-warm on restart | **Disk mmap**, instant on reconnect |
+| Setup | Edit JSON config files | **Zero config** — copy skill directory |
+| Best for | Heavy continuous use, multi-tool | **On-demand**, exits when done |
 
 ## Quick Start
 

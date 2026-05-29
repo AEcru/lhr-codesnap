@@ -126,7 +126,7 @@ codesnap status                 # Index stats + coverage
 ### Why Rust instead of Node.js?
 
 - Single static binary, no runtime dependency
-- 5MB vs 80MB (CodeGraph bundles Node)
+- 5MB vs 80MB (typical MCP servers bundle a runtime)
 - Memory-safe without GC pauses
 - tree-sitter and ripgrep have first-class Rust bindings
 

@@ -117,9 +117,9 @@ Size: ~1KB per file at 1% false positive rate. 10k files = 10MB total.
 | trace | 3-10s (manual grep) | 30-100ms | 10-30ms |
 | context | 5-15s (multi-rg) | 50-200ms | 20-50ms |
 
-## Comparison with CodeGraph
+## Comparison with Traditional MCP Solutions
 
-| Component | CodeGraph | CodeSnap |
+| Component | Traditional MCP | CodeSnap |
 |-----------|-----------|----------|
 | Search | SQLite FTS5 (B-Tree) | 3D Inverted Index + Trie |
 | Call graph | Adjacency list in SQLite | CSR multi-level |
