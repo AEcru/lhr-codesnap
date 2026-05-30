@@ -28,17 +28,19 @@ which codesnap 2>/dev/null || where codesnap 2>/dev/null || echo "NOT_INSTALLED"
 If NOT installed:
 
 ```bash
-# Primary: install from GitHub source (requires Rust/cargo)
-cargo install --git https://github.com/AEcru/lhr-codesnap.git codesnap
+# Primary: download pre-built binary (~30 seconds)
+# macOS / Linux:
+curl -fsSL https://raw.githubusercontent.com/AEcru/lhr-codesnap/main/install.sh | sh
 
-# Fallback: clone & build manually if cargo-install-git is unavailable
-git clone https://github.com/AEcru/lhr-codesnap.git /tmp/lhr-codesnap
-cd /tmp/lhr-codesnap && cargo build --release
-cp target/release/codesnap ~/.cargo/bin/
+# Windows (PowerShell):
+# irm https://raw.githubusercontent.com/AEcru/lhr-codesnap/main/install.ps1 | iex
+
+# Fallback: build from source (requires Rust 1.85+, ~10-25 minutes)
+cargo install --git https://github.com/AEcru/lhr-codesnap.git codesnap
 ```
 
-If Rust/cargo is NOT available, fall back to ripgrep for this session and
-tell the user to install Rust: https://rustup.rs
+If Rust/cargo is NOT available and binary download fails, fall back to
+ripgrep for this session and tell the user to install Rust: https://rustup.rs
 
 If you are INSIDE the codesnap source repo itself, use `cargo run --` as
 a shortcut (no global install needed):
@@ -47,19 +49,24 @@ a shortcut (no global install needed):
 cargo run --release -- <command> <args>
 ```
 
-After installation, run `codesnap init` in the target project to build the
-index. This is required once per project (a few seconds to 1-2 minutes).
+After installation, set up the project:
+
+```bash
+codesnap skill    # Install skill files to current project
+codesnap init     # Build the project index
+```
 
 ## Quick Reference
 
 | Command | Purpose | Example |
 |---------|---------|---------|
 | `codesnap init` | Build index (first time) | `codesnap init` |
+| `codesnap skill` | Install skill files to project | `codesnap skill` |
 | `codesnap find <name>` | Locate symbol definition | `codesnap find "UserService"` |
 | `codesnap callers <name>` | Who calls this symbol | `codesnap callers "validateToken"` |
 | `codesnap callees <name>` | What this symbol calls | `codesnap callees "login"` |
 | `codesnap impact <name>` | Full change impact radius | `codesnap impact "TokenUtil"` |
-| `codesnap trace <a> <b>` | Find call path from A to B | `codesnap trace "Order.create" "DB.save"` |
+| `codesnap trace <a> <b>` | Find call path from A to B | `codesnap trace "OrderController" "OrderRepository"` |
 | `codesnap context <task>` | Build relevant code context | `codesnap context "fix login bug"` |
 | `codesnap status` | Index health + coverage stats | `codesnap status` |
 | `codesnap check` | Verify index freshness | After git pull or branch switch |
@@ -117,10 +124,10 @@ Every query internally compares file mtimes with the index. If a file changed,
 it's incrementally re-parsed before results return. No need to run
 `codesnap check` before every query.
 
-### 6. Install once, init per project
+### 6. Install once, skill + init per project
 
-`codesnap` is installed once globally. Then run `codesnap init` once per
-project. After that, all queries are instant.
+`codesnap` is installed once globally. Then run `codesnap skill` and
+`codesnap init` once per project. After that, all queries are instant.
 
 ## Limitations
 

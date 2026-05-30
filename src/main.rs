@@ -1,6 +1,7 @@
 mod index;
 mod output;
 mod query;
+mod skill;
 mod sync;
 
 use anyhow::Result;
@@ -139,6 +140,12 @@ enum Command {
         #[arg(long)]
         json: bool,
     },
+    /// Install skill files to the current project
+    Skill {
+        /// Project path (defaults to current directory)
+        #[arg(default_value = ".")]
+        path: String,
+    },
 }
 
 fn main() -> Result<()> {
@@ -194,6 +201,9 @@ fn main() -> Result<()> {
         Command::Check { path, fix, json } => {
             let report = sync::Checker::new(&path).fix(fix).run()?;
             output::format::print_check_report(&report, json)?;
+        }
+        Command::Skill { path } => {
+            skill::install(&path)?;
         }
     }
 

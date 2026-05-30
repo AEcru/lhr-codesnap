@@ -1,0 +1,124 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            bin: codesnap.exe
+            archive_ext: zip
+          - target: x86_64-apple-darwin
+            os: macos-13
+            bin: codesnap
+            archive_ext: tar.gz
+          - target: aarch64-apple-darwin
+            os: macos-14
+            bin: codesnap
+            archive_ext: tar.gz
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+            bin: codesnap
+            archive_ext: tar.gz
+            use_cross: false
+            musl_target: true
+          - target: aarch64-unknown-linux-musl
+            os: ubuntu-latest
+            bin: codesnap
+            archive_ext: tar.gz
+            use_cross: true
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install musl-tools (Linux x64)
+        if: matrix.musl_target && !matrix.use_cross
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+
+      - name: Install cross (Linux arm64)
+        if: matrix.use_cross
+        run: cargo install cross --locked
+
+      - name: Build
+        env:
+          CC_x86_64_unknown_linux_musl: musl-gcc
+        shell: bash
+        run: |
+          if [ "${{ matrix.use_cross }}" = "true" ]; then
+            cross build --target ${{ matrix.target }} --release
+          else
+            cargo build --target ${{ matrix.target }} --release
+          fi
+
+      - name: Prepare archive
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          ARCHIVE_NAME="codesnap-${TAG}-${{ matrix.target }}"
+          mkdir -p "$ARCHIVE_NAME/skill/references"
+          cp "target/${{ matrix.target }}/release/${{ matrix.bin }}" "$ARCHIVE_NAME/"
+          cp .claude/skills/lhr-codesnap/SKILL.md "$ARCHIVE_NAME/skill/"
+          cp .claude/skills/lhr-codesnap/references/*.md "$ARCHIVE_NAME/skill/references/"
+          cp LICENSE "$ARCHIVE_NAME/"
+          cp README.md "$ARCHIVE_NAME/"
+          cp README.en.md "$ARCHIVE_NAME/"
+
+          if [ "${{ matrix.archive_ext }}" = "zip" ]; then
+            7z a "${ARCHIVE_NAME}.zip" "$ARCHIVE_NAME"
+          else
+            tar czf "${ARCHIVE_NAME}.tar.gz" "$ARCHIVE_NAME"
+          fi
+
+      - name: Generate SHA256
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          ARCHIVE_NAME="codesnap-${TAG}-${{ matrix.target }}"
+          if [ "${{ matrix.archive_ext }}" = "zip" ]; then
+            sha256sum "${ARCHIVE_NAME}.zip" > "${ARCHIVE_NAME}.zip.sha256"
+          else
+            sha256sum "${ARCHIVE_NAME}.tar.gz" > "${ARCHIVE_NAME}.tar.gz.sha256"
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: codesnap-${{ matrix.target }}
+          path: |
+            codesnap-*.tar.gz
+            codesnap-*.zip
+            codesnap-*.sha256
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: artifacts/*
+          generate_release_notes: true

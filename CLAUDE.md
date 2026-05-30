@@ -13,7 +13,7 @@ with data structures optimized for code analysis: inverted indexes, compressed s
 
 | Layer | Technology |
 |-------|-----------|
-| CLI | Rust (musl static binary, ~5MB) |
+| CLI | Rust (musl static binary, ~1MB) |
 | Index storage | Custom binary format, mmap'd read |
 | AST parsing | tree-sitter (on-demand, per-file) |
 | Data structures | Inverted index + Trie + CSR + Roaring Bitmap |
@@ -39,6 +39,7 @@ codesnap/
 │               └── architecture.md  # Data structure design
 ├── src/                        # CLI source code (Rust)
 │   ├── main.rs
+│   ├── skill.rs                # Skill file auto-installer
 │   ├── index/
 │   │   ├── builder.rs          # Index construction
 │   │   ├── inverted.rs         # 3D inverted index
@@ -61,6 +62,7 @@ codesnap/
 
 ```bash
 codesnap init [path]            # Build full index
+codesnap skill                  # Install skill files to project
 codesnap find <name>            # Search symbol definition
 codesnap callers <name>         # Find callers
 codesnap callees <name>         # Find callees
@@ -76,7 +78,7 @@ codesnap status                 # Index stats + coverage
 1. **Zero-config**: No MCP JSON, no background daemon, no API keys.
 2. **Lazy-first**: Index on disk, mmap on-demand, process exits when done.
 3. **Self-healing**: Every query auto-checks file mtime and incrementally re-indexes.
-4. **Tiny footprint**: <5MB binary, <5% of project size for index, 0MB RAM when idle.
+4. **Tiny footprint**: <1MB binary, <5% of project size for index, 0MB RAM when idle.
 5. **Best data structure per query type**: Not one database for everything.
 
 ## Development Rules
@@ -126,7 +128,7 @@ codesnap status                 # Index stats + coverage
 ### Why Rust instead of Node.js?
 
 - Single static binary, no runtime dependency
-- 5MB vs 80MB (typical MCP servers bundle a runtime)
+- 1MB vs 80MB (typical MCP servers bundle a runtime)
 - Memory-safe without GC pauses
 - tree-sitter and ripgrep have first-class Rust bindings
 

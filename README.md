@@ -5,8 +5,9 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/Rust-2024%20edition-orange.svg)](https://www.rust-lang.org/)
-[![Binary Size](https://img.shields.io/badge/binary-~5MB-brightgreen.svg)]()
+[![Binary Size](https://img.shields.io/badge/binary-~1MB-brightgreen.svg)]()
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blue.svg)]()
+[![Release](https://img.shields.io/github/v/release/AEcru/lhr-codesnap)](https://github.com/AEcru/lhr-codesnap/releases)
 
 [English](README.en.md) | 中文
 
@@ -48,17 +49,26 @@ CodeSnap 换了一个思路：**把代码分析做成一个极简的 CLI 工具 
 ### 1. 安装 CLI
 
 ```bash
-# macOS / Linux
+# macOS / Linux（下载预编译二进制，~30 秒）
 curl -fsSL https://raw.githubusercontent.com/AEcru/lhr-codesnap/main/install.sh | sh
 
-# Windows (PowerShell)
+# Windows (PowerShell，下载预编译二进制，~30 秒)
 irm https://raw.githubusercontent.com/AEcru/lhr-codesnap/main/install.ps1 | iex
 
-# 或者通过 Cargo
-cargo install codesnap
+# 或者从源码构建（需要 Rust 1.85+，~10-25 分钟）
+cargo install --git https://github.com/AEcru/lhr-codesnap.git codesnap
 ```
 
-### 2. 安装 Skill 文件
+### 2. 安装 Skill 文件并初始化
+
+```bash
+cd your-project
+codesnap skill    # 自动安装 Skill 文件到 .claude/skills/lhr-codesnap/
+codesnap init     # 构建项目索引
+```
+
+<details>
+<summary>手动安装 Skill 文件（可选）</summary>
 
 将 `.claude/skills/lhr-codesnap/` 目录复制到你的项目的 `.claude/skills/` 目录下：
 
@@ -72,22 +82,16 @@ your-project/
                 ├── commands.md        # 命令完整参考
                 └── architecture.md    # 架构设计细节
 ```
+</details>
 
-### 3. 初始化索引
-
-```bash
-cd your-project
-codesnap init
-```
+### 3. 开始使用
 
 小项目几秒完成，大项目 1-2 分钟。初始化后所有查询都是瞬时返回。
-
-### 4. 开始使用
 
 在你的 Claude Code 会话中，AI 会自动在合适的场景触发 CodeSnap。你也可以直接要求：
 
 > "帮我找到 UserService 的定义"
-> "追踪 login() 到 saveToDatabase() 的调用链"
+> "追踪 login 到 saveToDatabase 的调用链"
 > "分析修改 TokenUtil 会影响哪些文件"
 
 ## 命令参考
@@ -95,6 +99,7 @@ codesnap init
 | 命令 | 功能 | 示例 |
 |------|------|------|
 | `codesnap init [path]` | 构建完整索引 | `codesnap init` |
+| `codesnap skill` | 安装 Skill 文件到项目 | `codesnap skill` |
 | `codesnap find <name>` | 搜索符号定义位置 | `codesnap find "UserService"` |
 | `codesnap callers <name>` | 查找调用者 | `codesnap callers "validateToken"` |
 | `codesnap callees <name>` | 查找被调用者 | `codesnap callees "login"` |
@@ -195,6 +200,7 @@ codesnap/
 │               └── architecture.md
 ├── src/                        # CLI 源码 (Rust)
 │   ├── main.rs
+│   ├── skill.rs                # Skill 文件自动安装
 │   ├── index/                  # 索引构建
 │   ├── query/                  # 查询引擎
 │   ├── sync/                   # 增量同步
@@ -207,11 +213,11 @@ codesnap/
 ## 开发计划
 
 - [x] 架构设计与数据结构选型
-- [ ] Rust CLI 核心实现
+- [x] Rust CLI 核心实现
 - [x] Skill 文件（SKILL.md + references/）
-- [ ] 一键安装脚本
+- [x] 一键安装脚本（预编译二进制 + cargo 回退）
+- [x] 跨平台 CI/CD 构建（5 平台自动发布）
 - [ ] 20+ 语言 tree-sitter 支持
-- [ ] 跨平台 CI/CD 构建
 - [ ] 基准测试框架
 
 ## 贡献

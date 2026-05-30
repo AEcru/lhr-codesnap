@@ -5,8 +5,9 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/Rust-2024%20edition-orange.svg)](https://www.rust-lang.org/)
-[![Binary Size](https://img.shields.io/badge/binary-~5MB-brightgreen.svg)]()
+[![Binary Size](https://img.shields.io/badge/binary-~1MB-brightgreen.svg)]()
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blue.svg)]()
+[![Release](https://img.shields.io/github/v/release/AEcru/lhr-codesnap)](https://github.com/AEcru/lhr-codesnap/releases)
 
 [中文](README.md) | English
 
@@ -38,7 +39,7 @@ How it works:
 | First use | Wait for pre-built index | Instant, progressive indexing |
 | Memory (idle) | 100-300MB (always on) | **0MB** |
 | Memory (active) | 100-300MB | 30-80MB |
-| Binary size | ~80MB (bundled runtime) | **~5MB** (Rust musl static) |
+| Binary size | ~80MB (bundled runtime) | **~1MB** (Rust musl static) |
 | Search engine | Generic full-text engine | **3D Inverted Index + Trie** (code-aware) |
 | Call graph | Generic relational DB + JOIN | **CSR compressed graph** (L3 cache resident) |
 | Impact analysis | Recursive SQL queries | **Roaring Bitmap** bitwise ops |
@@ -53,17 +54,29 @@ How it works:
 ### 1. Install CLI
 
 ```bash
-# macOS / Linux
+# macOS / Linux (download pre-built binary, ~30 seconds)
 curl -fsSL https://raw.githubusercontent.com/AEcru/lhr-codesnap/main/install.sh | sh
 
-# Windows (PowerShell)
+# Windows (PowerShell, download pre-built binary, ~30 seconds)
 irm https://raw.githubusercontent.com/AEcru/lhr-codesnap/main/install.ps1 | iex
 
-# Or via Cargo
-cargo install codesnap
+# Or build from source (requires Rust 1.85+, ~10-25 minutes)
+cargo install --git https://github.com/AEcru/lhr-codesnap.git codesnap
 ```
 
-### 2. Install the Skill
+### 2. Install Skill Files & Initialize
+
+```bash
+cd your-project
+codesnap skill    # Auto-install skill files to .claude/skills/lhr-codesnap/
+codesnap init     # Build the project index
+```
+
+A few seconds for small projects, 1-2 minutes for large ones. After init, all
+queries are instant (sub-millisecond).
+
+<details>
+<summary>Manual Skill Installation (optional)</summary>
 
 Copy the `.claude/skills/lhr-codesnap/` directory to your project's
 `.claude/skills/` directory:
@@ -78,18 +91,9 @@ your-project/
                 ├── commands.md        # Full command reference
                 └── architecture.md    # Architecture design details
 ```
+</details>
 
-### 3. Initialize the Index
-
-```bash
-cd your-project
-codesnap init
-```
-
-A few seconds for small projects, 1-2 minutes for large ones. After init, all
-queries are instant (sub-millisecond).
-
-### 4. Start Using
+### 3. Start Using
 
 In your Claude Code session, the AI will automatically invoke CodeSnap when it
 needs to understand code. Or ask directly:
@@ -103,6 +107,7 @@ needs to understand code. Or ask directly:
 | Command | What it does | Example |
 |---------|-------------|---------|
 | `codesnap init [path]` | Build full index | `codesnap init` |
+| `codesnap skill` | Install skill files to project | `codesnap skill` |
 | `codesnap find <name>` | Locate symbol definition | `codesnap find "UserService"` |
 | `codesnap callers <name>` | Find callers of a symbol | `codesnap callers "validateToken"` |
 | `codesnap callees <name>` | Find what a symbol calls | `codesnap callees "login"` |
@@ -204,6 +209,7 @@ codesnap/
 │               └── architecture.md
 ├── src/                        # CLI source (Rust)
 │   ├── main.rs
+│   ├── skill.rs                # Skill file auto-installer
 │   ├── index/                  # Index construction
 │   ├── query/                  # Query engine
 │   ├── sync/                   # Incremental sync
@@ -216,11 +222,11 @@ codesnap/
 ## Roadmap
 
 - [x] Architecture design & data structure selection
-- [ ] Rust CLI core implementation
+- [x] Rust CLI core implementation
 - [x] Skill file (SKILL.md + references/)
-- [ ] One-line install script
+- [x] One-line install script (pre-built binary + cargo fallback)
+- [x] Cross-platform CI/CD builds (5-platform auto-release)
 - [ ] 20+ language tree-sitter support
-- [ ] Cross-platform CI/CD builds
 - [ ] Benchmark framework
 
 ## Contributing
