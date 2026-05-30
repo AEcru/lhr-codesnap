@@ -91,10 +91,20 @@ jobs:
         run: |
           TAG="${GITHUB_REF_NAME}"
           ARCHIVE_NAME="codesnap-${TAG}-${{ matrix.target }}"
+          set_sha256() {
+            local file="$1"
+            if command -v sha256sum >/dev/null 2>&1; then
+              sha256sum "$file" > "${file}.sha256"
+            elif command -v shasum >/dev/null 2>&1; then
+              shasum -a 256 "$file" | awk '{print $1 "  " $2}' > "${file}.sha256"
+            else
+              openssl dgst -sha256 -r "$file" | awk '{print $1 "  " $2}' > "${file}.sha256"
+            fi
+          }
           if [ "${{ matrix.archive_ext }}" = "zip" ]; then
-            sha256sum "${ARCHIVE_NAME}.zip" > "${ARCHIVE_NAME}.zip.sha256"
+            set_sha256 "${ARCHIVE_NAME}.zip"
           else
-            sha256sum "${ARCHIVE_NAME}.tar.gz" > "${ARCHIVE_NAME}.tar.gz.sha256"
+            set_sha256 "${ARCHIVE_NAME}.tar.gz"
           fi
 
       - name: Upload artifact
