@@ -119,23 +119,23 @@ needs to understand code. Or ask directly:
 
 ## Supported Languages
 
-| Language | Extensions | Support Level |
-|----------|-----------|---------------|
-| TypeScript / JavaScript | `.ts` `.tsx` `.js` `.jsx` `.mjs` | Full |
-| Python | `.py` | Full |
-| Go | `.go` | Full |
-| Rust | `.rs` | Full |
-| Java | `.java` | Full |
-| C# | `.cs` | Full |
-| PHP | `.php` | Full |
-| Ruby | `.rb` | Full |
-| C / C++ | `.c` `.h` `.cpp` `.hpp` `.cc` | Full |
-| Swift | `.swift` | Full |
-| Kotlin | `.kt` `.kts` | Full |
-| Dart | `.dart` | Full |
-| Vue | `.vue` | Full |
-| Svelte | `.svelte` | Full |
-| Lua | `.lua` `.luau` | Full |
+| Language | Use Case | Extensions | Support Level |
+|----------|----------|-----------|---------------|
+| TypeScript / JavaScript | Full-stack | `.ts` `.tsx` `.js` `.jsx` `.mjs` | Full |
+| Python | Backend | `.py` | Full |
+| Go | Backend | `.go` | Full |
+| Rust | Backend | `.rs` | Full |
+| Java | Backend | `.java` | Full |
+| C# | Backend | `.cs` | Full |
+| PHP | Backend | `.php` | Full |
+| Ruby | Backend | `.rb` | Full |
+| C / C++ | Backend / System | `.c` `.h` `.cpp` `.hpp` `.cc` | Full |
+| Swift | Mobile / Backend | `.swift` | Full |
+| Kotlin | Mobile / Backend | `.kt` `.kts` | Full |
+| Dart | Mobile | `.dart` | Full |
+| Vue | Frontend | `.vue` | Full |
+| Svelte | Frontend | `.svelte` | Full |
+| Lua | Backend / Embedded | `.lua` `.luau` | Full |
 
 ## Architecture
 

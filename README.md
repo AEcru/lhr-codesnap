@@ -111,23 +111,23 @@ your-project/
 
 ## 支持的语言
 
-| 语言 | 扩展名 | 支持程度 |
-|------|--------|----------|
-| TypeScript / JavaScript | `.ts` `.tsx` `.js` `.jsx` `.mjs` | 完整支持 |
-| Python | `.py` | 完整支持 |
-| Go | `.go` | 完整支持 |
-| Rust | `.rs` | 完整支持 |
-| Java | `.java` | 完整支持 |
-| C# | `.cs` | 完整支持 |
-| PHP | `.php` | 完整支持 |
-| Ruby | `.rb` | 完整支持 |
-| C / C++ | `.c` `.h` `.cpp` `.hpp` `.cc` | 完整支持 |
-| Swift | `.swift` | 完整支持 |
-| Kotlin | `.kt` `.kts` | 完整支持 |
-| Dart | `.dart` | 完整支持 |
-| Vue | `.vue` | 完整支持 |
-| Svelte | `.svelte` | 完整支持 |
-| Lua | `.lua` `.luau` | 完整支持 |
+| 语言 | 场景 | 扩展名 | 支持程度 |
+|------|------|--------|----------|
+| TypeScript / JavaScript | 前后端 | `.ts` `.tsx` `.js` `.jsx` `.mjs` | 完整支持 |
+| Python | 后端 | `.py` | 完整支持 |
+| Go | 后端 | `.go` | 完整支持 |
+| Rust | 后端 | `.rs` | 完整支持 |
+| Java | 后端 | `.java` | 完整支持 |
+| C# | 后端 | `.cs` | 完整支持 |
+| PHP | 后端 | `.php` | 完整支持 |
+| Ruby | 后端 | `.rb` | 完整支持 |
+| C / C++ | 后端 / 系统 | `.c` `.h` `.cpp` `.hpp` `.cc` | 完整支持 |
+| Swift | 移动端 / 后端 | `.swift` | 完整支持 |
+| Kotlin | 移动端 / 后端 | `.kt` `.kts` | 完整支持 |
+| Dart | 移动端 | `.dart` | 完整支持 |
+| Vue | 前端 | `.vue` | 完整支持 |
+| Svelte | 前端 | `.svelte` | 完整支持 |
+| Lua | 后端 / 嵌入式 | `.lua` `.luau` | 完整支持 |
 
 ## 技术架构
 
